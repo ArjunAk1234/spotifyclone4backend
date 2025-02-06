@@ -6,6 +6,8 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 require('dotenv').config();
+const heapdump = require('heapdump');
+heapdump.writeSnapshot('./heapdump.heapsnapshot');
 
 const app = express();
 app.use(bodyParser.json());
