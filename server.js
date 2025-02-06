@@ -1,4 +1,3 @@
-
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -17,19 +16,13 @@ mongoose.connect(uri1)
   .then(() => console.log(' MongoDB connected successfully'))
   .catch(err => console.error(' MongoDB connection error:', err));
 
+
 const UserSchema = new mongoose.Schema({
   username: String,
   email: String,
   password: String
 }, { collection: 'user' });
 
-// const MusicSchema = new mongoose.Schema({
-//   title: String,
-//   artist: String,
-//   genre: String,
-//   file: Buffer, // Store audio file in MongoDB
-//   albumCover: Buffer // Store image in MongoDB
-// }, { collection: 'music' });
 const MusicSchema = new mongoose.Schema({
   title: String,
   artist: String,
@@ -51,7 +44,6 @@ const Playlist = mongoose.model('Playlist', PlaylistSchema);
 
 const storage = multer.memoryStorage(); // Store files in memory as buffers
 const upload = multer({ storage: storage });
-
 
 const stream = require('stream');
 app.post('/upload-song', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'albumCover', maxCount: 1 }]), async (req, res) => {
@@ -97,10 +89,6 @@ app.get('/songs', async (req, res) => {
   }
 });
 
-
-
-
-
 // POST /register
 app.post('/register', async (req, res) => {
   const { username, email, password } = req.body;
@@ -125,25 +113,27 @@ app.post('/register', async (req, res) => {
 // POST /login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const user = await User.findOne({ username });
     if (!user) return res.status(401).json({ message: 'User not found' });
-
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
-
-    res.status(200).json({ message: 'Login successful' });
+    // Return userId and token
+    res.status(200).json({ 
+      message: 'Login successful',
+      userId: user._id,  // Send the userId
+      token: 'your-jwt-token' // Or however you're handling authentication
+    });
   } catch (err) {
     console.error('Server error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
 
-// POST /playlists
+
 app.post('/playlists', async (req, res) => {
   const { name, userId } = req.body;
-
+  console.log(userId);
   try {
     const newPlaylist = new Playlist({ userId, name, songs: [] });
     await newPlaylist.save();
@@ -153,13 +143,16 @@ app.post('/playlists', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+// POST /playlists
 
-// GET /playlists
 app.get('/playlists', async (req, res) => {
   const { userId } = req.query;
-
   try {
-    const playlists = await Playlist.find({ userId }).populate('songs');
+    const playlists = await Playlist.find({ userId }).populate({
+      path: 'songs',
+      select: '_id title artist genre file albumCover', // Ensure file is selected
+    });
+
     res.status(200).json(playlists);
   } catch (err) {
     console.error('Error fetching playlists:', err);
@@ -167,29 +160,6 @@ app.get('/playlists', async (req, res) => {
   }
 });
 
-// POST /playlists/:playlistId/songs
-app.post('/playlists/:playlistId/songs', async (req, res) => {
-  const { playlistId } = req.params;
-  const { songId } = req.body;
-
-  if (!songId) return res.status(400).json({ message: 'songId is required' });
-
-  try {
-    const playlist = await Playlist.findById(playlistId);
-    if (!playlist) return res.status(404).json({ message: 'Playlist not found' });
-
-    if (playlist.songs.includes(songId)) {
-      return res.status(400).json({ message: 'Song already exists in the playlist' });
-    }
-
-    playlist.songs.push(songId);
-    await playlist.save();
-    res.status(200).json(playlist);
-  } catch (err) {
-    console.error('Error adding song to playlist:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
  app.delete('/playlists/:playlistId/songs/:songId', async (req, res) => {
     const { playlistId, songId } = req.params;
     try {
@@ -234,4 +204,27 @@ app.post('/playlists/:playlistId/songs', async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   });
+  app.post('/playlists/:playlistId/songs', async (req, res) => {
+    const { playlistId } = req.params;
+    const { songId } = req.body;
+  
+    if (!songId) return res.status(400).json({ message: 'songId is required' });
+  
+    try {
+      const playlist = await Playlist.findById(playlistId);
+      if (!playlist) return res.status(404).json({ message: 'Playlist not found' });
+  
+      // Add the song to the playlist
+      if (!playlist.songs.includes(songId)) {
+        playlist.songs.push(songId);
+        await playlist.save();
+      }
+  
+      res.status(200).json(playlist);
+    } catch (err) {
+      console.error('Error adding song to playlist:', err);
+      res.status(500).json({ message: 'Error adding song to playlist' });
+    }
+  });
+  
 app.listen(3000, () => console.log('Server running on port 3000'));
