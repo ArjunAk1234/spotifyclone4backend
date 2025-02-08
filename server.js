@@ -10,11 +10,10 @@ require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
-// app.use(cors({
-//   origin: 'https://spotifyclone4frontend123.vercel.app', // Replace with your frontend URL
-// }));
-const cors = require("cors");
-app.use(cors());  // Allow requests from any origin
+app.use(cors({
+  origin: 'https://spotifyclone4frontend123.vercel.app', // Replace with your frontend URL
+}));
+
 
 
 const uri1 = "mongodb+srv://ananthakrishnans0608:ArjunAk1234@spotify1.gqzqg.mongodb.net/music?retryWrites=true&w=majority&appName=spotify1";
@@ -85,29 +84,16 @@ app.post('/upload-song', upload.fields([{ name: 'file', maxCount: 1 }, { name: '
 });
 
 
-// app.get('/songs', async (req, res) => {
-//   try {
-//     const songs = await Music.find(); // Get all songs from the database
-//     res.status(200).json(songs);
-//   } catch (err) {
-//     console.error('Error fetching songs:', err);
-//     res.status(500).json({ message: 'Server error' });
-//   }
-// });
-app.get("/songs", async (req, res) => {
-    try {
-        const songs = await SongModel.find();  // Fetch from MongoDB
-
-        if (!songs || songs.length === 0) {
-            return res.status(200).json([]);  // Send empty array if no songs
-        }
-
-        res.json(songs);  // Send valid JSON response
-    } catch (error) {
-        console.error("Error fetching songs:", error);
-        res.status(500).json({ error: "Internal Server Error" });  // Always send JSON
-    }
+app.get('/songs', async (req, res) => {
+  try {
+    const songs = await Music.find(); // Get all songs from the database
+    res.status(200).json(songs);
+  } catch (err) {
+    console.error('Error fetching songs:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
+
 
 
 // POST /register
