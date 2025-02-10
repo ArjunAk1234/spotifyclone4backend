@@ -99,10 +99,16 @@ app.post('/upload-song', upload.fields([{ name: 'file', maxCount: 1 }, { name: '
 //     res.status(500).json({ message: 'Server error' });
 //   }
 // });
+
 app.get('/songs', async (req, res) => {
   try {
     const songs = await Music.find({}, '_id title artist genre'); // Exclude binary fields
-    res.status(200).json(songs);
+
+    res.status(200).json(songs.map(song => ({
+      ...song.toObject(),
+      fileUrl: `https://spotifyclone4backend.vercel.app/song/${song._id}`,  // Song file URL
+      albumCoverUrl: `https://spotifyclone4backend.vercel.app/album-cover/${song._id}` // Album cover URL
+    })));
   } catch (err) {
     console.error('Error fetching songs:', err);
     res.status(500).json({ message: 'Server error' });
@@ -213,20 +219,35 @@ app.get('/playlists', async (req, res) => {
       res.status(500).json({ success: false, message: 'Server error' });
     }
   });
-  app.get('/album-cover/:id', async (req, res) => {
-    try {
-      const song = await Music.findById(req.params.id);
-      if (!song || !song.albumCover) {
-        return res.status(404).json({ message: 'Album cover not found' });
-      }
+  // app.get('/album-cover/:id', async (req, res) => {
+  //   try {
+  //     const song = await Music.findById(req.params.id);
+  //     if (!song || !song.albumCover) {
+  //       return res.status(404).json({ message: 'Album cover not found' });
+  //     }
   
-      res.set('Content-Type', 'image/jpeg'); // Set response header
-      res.send(song.albumCover); // Send image binary data
-    } catch (err) {
-      console.error('Error fetching album cover:', err);
-      res.status(500).json({ message: 'Server error' });
+  //     res.set('Content-Type', 'image/jpeg'); // Set response header
+  //     res.send(song.albumCover); // Send image binary data
+  //   } catch (err) {
+  //     console.error('Error fetching album cover:', err);
+  //     res.status(500).json({ message: 'Server error' });
+  //   }
+  // });
+app.get('/album-cover/:id', async (req, res) => {
+  try {
+    const song = await Music.findById(req.params.id);
+    if (!song || !song.albumCover) {
+      return res.status(404).json({ message: 'Album cover not found' });
     }
-  });
+
+    res.set('Content-Type', 'image/jpeg'); // Set correct MIME type
+    res.send(song.albumCover); // Send the album cover binary file
+  } catch (err) {
+    console.error('Error fetching album cover:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
   app.post('/playlists/:playlistId/songs', async (req, res) => {
     const { playlistId } = req.params;
     const { songId } = req.body;
