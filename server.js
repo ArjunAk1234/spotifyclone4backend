@@ -90,15 +90,25 @@ app.post('/upload-song', upload.fields([{ name: 'file', maxCount: 1 }, { name: '
 });
 
 
+// app.get('/songs', async (req, res) => {
+//   try {
+//     const songs = await Music.find(); // Get all songs from the database
+//     res.status(200).json(songs);
+//   } catch (err) {
+//     console.error('Error fetching songs:', err);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 app.get('/songs', async (req, res) => {
   try {
-    const songs = await Music.find(); // Get all songs from the database
+    const songs = await Music.find({}, '_id title artist genre'); // Exclude binary fields
     res.status(200).json(songs);
   } catch (err) {
     console.error('Error fetching songs:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 
