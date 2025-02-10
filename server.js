@@ -13,11 +13,13 @@ app.use(bodyParser.json());
 // app.use(cors({
 //   origin: 'https://spotifyclone4frontend123.vercel.app', // Replace with your frontend URL
 // }));
-origin: 'https://spotifyclone4frontend123.vercel.app', // Allow frontend domain
+app.use(cors({
+  origin: 'https://spotifyclone4frontend123.vercel.app', // Allow frontend domain
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true // If using cookies or tokens
 }));
+
 
 
 const uri1 = "mongodb+srv://ananthakrishnans0608:ArjunAk1234@spotify1.gqzqg.mongodb.net/music?retryWrites=true&w=majority&appName=spotify1";
